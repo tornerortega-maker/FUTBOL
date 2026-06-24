@@ -3,17 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FÚTBOL TV PRO REAL</title>
+<title>FÚTBOL TV PRO REAL FIX</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#05070a">
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:radial-gradient(circle at top,#1d232c,#05070a 60%);color:white;padding:16px;min-height:100vh}
-.app{max-width:540px;margin:auto}
-.header{text-align:center;padding:20px 0 12px}.logo{font-size:54px}
-h1{font-size:32px;margin:8px 0;background:linear-gradient(120deg,#fff,#8d959f,#fff);-webkit-background-clip:text;color:transparent}
-.sub{color:#cbd0d6}.tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0}
+.app{max-width:540px;margin:auto}.header{text-align:center;padding:20px 0 12px}.logo{font-size:54px}
+h1{font-size:32px;margin:8px 0;background:linear-gradient(120deg,#fff,#8d959f,#fff);-webkit-background-clip:text;color:transparent}.sub{color:#cbd0d6}
+.tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0}
 .tab,.btn{padding:12px;border-radius:14px;border:1px solid #8d959f;background:#111820;color:#e8e8e8;font-weight:bold}
 .btn{width:100%;background:linear-gradient(120deg,#fff,#aeb4bb,#fff);color:#05070a;margin-top:8px}
 .leagues{display:flex;overflow-x:auto;gap:8px;margin:12px 0;padding-bottom:6px}
@@ -22,11 +21,10 @@ h1{font-size:32px;margin:8px 0;background:linear-gradient(120deg,#fff,#8d959f,#f
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px}.team{font-size:16px;font-weight:bold;max-width:35%}
 .comp{color:#cfd3d7;font-size:13px;margin-bottom:7px}.time{font-size:21px;font-weight:bold;color:#f0f3f6;text-align:center}
 .channel{display:inline-block;margin-top:10px;padding:7px 10px;border-radius:10px;background:#0e1115;border:1px solid #cfd3d7;color:#fff;font-weight:bold}
-.live{color:#55ff9f;font-weight:bold}.score{font-size:22px;font-weight:bold;color:#55ff9f}
-.star{font-size:25px;background:none;border:0;color:#cfd3d7}.small{color:#cbd0d6;font-size:13px;line-height:1.4}
+.score{font-size:22px;font-weight:bold;color:#55ff9f}.star{font-size:25px;background:none;border:0;color:#cfd3d7}
+.small{color:#cbd0d6;font-size:13px;line-height:1.4}.error{color:#ffb3b3}.ok{color:#91ffa8}
 input{width:100%;padding:12px;margin:8px 0;border-radius:12px;background:#070a0d;border:1px solid #8d959f;color:white}
 .footer{font-size:12px;color:#aeb4bb;text-align:center;margin:18px 0}
-.error{color:#ffb3b3}.ok{color:#91ffa8}
 </style>
 </head>
 <body>
@@ -54,41 +52,29 @@ input{width:100%;padding:12px;margin:8px 0;border-radius:12px;background:#070a0d
 
   <div class="card">
     <b>🔄 Datos reales</b>
-    <div class="small">La app consulta API-Football cada vez que la abres o pulsas actualizar. Los canales de TV son orientativos para España porque API-Football no siempre incluye emisiones.</div>
+    <div class="small">Versión FIX: envía la clave API correctamente. Los canales TV son orientativos para España.</div>
     <button class="btn" onclick="cargarHoy()">Actualizar ahora</button>
   </div>
 
   <div id="contenido"></div>
-  <div class="footer">FÚTBOL TV PRO REAL · API-Football</div>
+  <div class="footer">FÚTBOL TV PRO REAL FIX · API-Football</div>
 </div>
 
 <script>
-let apiKey = localStorage.getItem("apiFootballKey") || "";
+let apiKey = (localStorage.getItem("apiFootballKey") || "").trim();
 let ligaSeleccionada = "all";
 let favoritos = JSON.parse(localStorage.getItem("futbolTvFavs") || "[]");
 const API = "https://v3.football.api-sports.io";
 
-const ligas = {
-  140: "LaLiga",
-  39: "Premier League",
-  2: "Champions League",
-  4: "Eurocopa",
-  1: "Mundial"
-};
-
 function hoyISO(){
   const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
 function temporadaPorLiga(id){
   const y = new Date().getFullYear();
   if(id == 4) return 2024;
   if(id == 1) return 2026;
-  if(id == 2) return y;
   return y;
 }
 
@@ -101,25 +87,38 @@ function canalTV(liga){
   return "Consultar operador";
 }
 
-function guardarFavs(){localStorage.setItem("futbolTvFavs", JSON.stringify(favoritos))}
-function esFav(id){return favoritos.includes(id)}
-function toggleFav(id){esFav(id)?favoritos=favoritos.filter(x=>x!==id):favoritos.push(id);guardarFavs();cargarHoy()}
-
 function mostrarAjustes(){
+  const visible = apiKey ? apiKey.slice(0,4) + "..." + apiKey.slice(-4) : "No guardada";
   document.getElementById("contenido").innerHTML = `
   <div class="card">
     <h2>🔐 API Key</h2>
-    <div class="small">Pega aquí tu API Key de API-Football. Se guarda solo en este móvil.</div>
+    <div class="small">Estado actual: <b>${visible}</b></div>
     <input id="key" placeholder="Pega aquí tu API Key" value="${apiKey}">
     <button class="btn" onclick="guardarKey()">Guardar API Key</button>
-    <div class="small">Importante: si has enseñado una clave en una captura, resetea la clave en API-Sports y pega aquí la nueva.</div>
+    <button class="btn" onclick="probarAPI()">Probar API</button>
+    <button class="btn" onclick="borrarKey()">Borrar API Key</button>
   </div>`;
 }
 
 function guardarKey(){
-  apiKey = document.getElementById("key").value.trim();
+  apiKey = document.getElementById("key").value.trim().replace(/\s/g,"");
   localStorage.setItem("apiFootballKey", apiKey);
-  document.getElementById("contenido").innerHTML = '<div class="card ok">✅ API Key guardada. Pulsa Hoy o Directo para cargar partidos reales.</div>';
+  document.getElementById("contenido").innerHTML = '<div class="card ok">✅ API Key guardada. Ahora pulsa API Key → Probar API o pulsa Hoy.</div>';
+}
+
+function borrarKey(){
+  localStorage.removeItem("apiFootballKey");
+  apiKey = "";
+  mostrarAjustes();
+}
+
+async function probarAPI(){
+  try{
+    const res = await apiFetch("/status");
+    document.getElementById("contenido").innerHTML = `<div class="card ok">✅ API funciona correctamente.<br><br>${JSON.stringify(res).slice(0,500)}</div>`;
+  }catch(e){
+    document.getElementById("contenido").innerHTML = `<div class="card error">❌ Prueba fallida: ${e.message}</div>`;
+  }
 }
 
 function seleccionarLiga(id){
@@ -128,35 +127,44 @@ function seleccionarLiga(id){
 }
 
 async function apiFetch(path){
+  apiKey = (localStorage.getItem("apiFootballKey") || apiKey || "").trim().replace(/\s/g,"");
   if(!apiKey){
     mostrarAjustes();
     throw new Error("Falta API Key");
   }
-  const r = await fetch(API + path, {headers: {"x-apisports-key": apiKey}});
-  const data = await r.json();
+
+  const r = await fetch(API + path, {
+    method: "GET",
+    headers: new Headers({
+      "x-apisports-key": apiKey
+    })
+  });
+
+  let data;
+  try { data = await r.json(); }
+  catch(e){ throw new Error("Respuesta no válida de la API"); }
+
   if(data.errors && Object.keys(data.errors).length){
     throw new Error(JSON.stringify(data.errors));
   }
-  return data.response || [];
+  return data.response || data;
 }
 
 function mostrarCargando(){
-  document.getElementById("contenido").innerHTML = '<div class="card">⏳ Cargando partidos reales...</div>';
+  document.getElementById("contenido").innerHTML = '<div class="card">⏳ Cargando datos reales...</div>';
 }
 
 async function cargarHoy(){
   mostrarCargando();
   try{
-    let ids = ligaSeleccionada === "all" ? [140,39,2,4,1] : [ligaSeleccionada];
+    const ids = ligaSeleccionada === "all" ? [140,39,2,4,1] : [ligaSeleccionada];
     let todo = [];
     for(const id of ids){
-      let date = hoyISO();
-      let path = `/fixtures?league=${id}&season=${temporadaPorLiga(id)}&date=${date}&timezone=Europe/Madrid`;
-      let res = await apiFetch(path);
-      res.forEach(x=>x._ligaFiltro=id);
+      const path = `/fixtures?league=${id}&season=${temporadaPorLiga(id)}&date=${hoyISO()}&timezone=Europe/Madrid`;
+      const res = await apiFetch(path);
       todo = todo.concat(res);
     }
-    render(todo, false);
+    render(todo);
   }catch(e){
     document.getElementById("contenido").innerHTML = `<div class="card error">❌ Error cargando datos: ${e.message}</div>`;
   }
@@ -165,42 +173,40 @@ async function cargarHoy(){
 async function cargarDirecto(){
   mostrarCargando();
   try{
-    let res = await apiFetch(`/fixtures?live=all`);
+    let res = await apiFetch("/fixtures?live=all");
     if(ligaSeleccionada !== "all") res = res.filter(x => x.league && x.league.id == ligaSeleccionada);
-    render(res, true);
+    render(res);
   }catch(e){
     document.getElementById("contenido").innerHTML = `<div class="card error">❌ Error cargando directo: ${e.message}</div>`;
   }
 }
 
 function horaMadrid(fixture){
-  const d = new Date(fixture.fixture.date);
-  return d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+  return new Date(fixture.fixture.date).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
 }
 
-function render(lista, directo){
+function render(lista){
   const c = document.getElementById("contenido");
   if(!lista.length){
     c.innerHTML = '<div class="card">No hay partidos encontrados para esta vista.</div>';
     return;
   }
+
   lista.sort((a,b)=>new Date(a.fixture.date)-new Date(b.fixture.date));
   c.innerHTML = lista.map(p=>{
-    const id = p.fixture.id;
     const status = p.fixture.status.short;
     const live = ["1H","2H","HT","ET","P","BT","INT"].includes(status);
-    const golesLocal = p.goals.home ?? "-";
-    const golesVisit = p.goals.away ?? "-";
+    const gl = p.goals.home ?? "-";
+    const gv = p.goals.away ?? "-";
     return `
     <div class="card">
       <div class="comp">${p.league.name} · ${p.fixture.status.long}</div>
       <div class="row">
         <div class="team">${p.teams.home.name}</div>
-        <div class="${live?'score':'time'}">${live ? golesLocal + " - " + golesVisit : horaMadrid(p)}</div>
+        <div class="${live?'score':'time'}">${live ? gl + " - " + gv : horaMadrid(p)}</div>
         <div class="team" style="text-align:right">${p.teams.away.name}</div>
       </div>
       <div class="channel">📺 ${canalTV(p.league.id)}</div>
-      <button class="star" onclick="toggleFav(${id})">${esFav(id)?"⭐":"☆"}</button>
     </div>`;
   }).join("");
 }
